@@ -13,10 +13,13 @@
 #' @param x a \code{rasterList-class} object 
 #' @param ... further arguments for \code{\link{rasterList}}
 #' 
+#' 
 #' @rdname stack
 #' @method stack RasterList
 #' @aliases stack 
 #' @export
+#' 
+#' @return a \code{\link{RasterStack-class}} object
 #' 
 #' @importFrom raster ncell stack
 #' @importFrom methods as

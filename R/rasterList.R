@@ -21,7 +21,7 @@ NULL
 #' @importFrom raster ncell raster nlayers 
 #' @importFrom methods as
 #' 
-#' 
+#' @return a \code{\link{RasterList-class}} object
 #' 
 #' @examples 
 #'
@@ -42,7 +42,7 @@ NULL
 #' 
 #' ## Sample L-moments
 #'  library(lmom)
-#' \dontrun{
+#' \donttest{
 #' prec <- stack(precf)
 #' samlmom <- stack(rasterList(prec,FUN=samlmu))
 #' ## Fitting a Random Probability Distribution: it is a 'rasterList' Object
@@ -266,7 +266,7 @@ setMethod("rasterList","RasterList",function (object,list=NULL,object.name=NA,FU
 			
 				
 				msg <- sprintf("Mismach between length of the list and number of raster calles : %d %d in %s",length(list),ncell(object),object@name)
-				print(msg)
+				message(msg)
 				stop(msg)
 				
 			}
