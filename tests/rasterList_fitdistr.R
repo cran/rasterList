@@ -15,9 +15,9 @@ context("Verfiy Probabibilty Distribution")
 
 ## It is Raster Examples:
 
-precf <- system.file("map/precipitation.grd", package="rasterList")
+##precf <- system.file("map/precipitation.grd", package="rasterList")
 
-prec <- stack(precf)
+##prec <- stack(precf)
 
 ### Or you can use Mekrou examples: 
 ## Yearly Precipitaion on Mecrow
@@ -32,21 +32,17 @@ pval <- raster(pvalf)
 ## Set time
 
 time <- as.Date(names(prec),format="X%Y.%m.%d")
-year <- year(time) ##lubridate::yearas.character(time,format="X%Y")
+year <- year(time) ##as.character(time,format="X%Y")
 
 ## Compute Annual Precipitation (sum aggregration)
 yearlyprec <- stackApply(x=prec,fun=sum,indices=year)
 
-##
-print(yearlyprec)
+
 ## L-moments
 
 
 samlmom <- stack(rasterList(yearlyprec,FUN=samlmu))
 
-
-print(samlmom)
-##
 ## lmrd plot 
 
 lmrd(as.data.frame(samlmom),cex=0.3)
@@ -70,25 +66,9 @@ pels <- pels[nn]
 
 ## FIT AND KSTESTING 
 fitPrec_gam <- rasterList(samlmom,FUN=pelgam)
-
-print(fitPrec_gam@list)
-
-
-##
 kstest_gam  <- RasterListApply(x=rasterList(yearlyprec),para=fitPrec_gam,y="cdfgam",FUN=ks.test)
-
-###
-print(kstest_gam@list)
-###
 pvalkstest <- raster(rasterList(kstest_gam,FUN=function(x) {return(x$p.value)}))	
-
-## 
-print(pvalkstest)
-##
-
-
-test <- values(pvalkstest-pval)
-str(test)
+test <- as.vector(pvalkstest-pval)
 test0 <- rep(0,length(test))
 
 #
@@ -99,7 +79,7 @@ test0 <- rep(0,length(test))
 #
 #
 #####
-test_that(desc="Testing final Results",code=expect_equal(test,test0, tolerance = .02, scale = 1))
+test_that(desc="Testing final Results",code=expect_equal(test,test0, tolerance = .002, scale = 1))
 
 #
 #fitPrec <- rasterList(samlmom,FUN=function(x,pels=pels) {

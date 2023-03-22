@@ -34,9 +34,6 @@ rasterList(object = NULL, list = NULL, object.name = NA, ...)
 
 \item{FUN}{function that can be used to apply to each element of the list in a \code{\link{RasterList-class}}}
 }
-\value{
-a \code{\link{RasterList-class}} object
-}
 \description{
 The method \code{rasterList} is the constructor of a  \code{\link{RasterList-class}} from a generic \code{object}.
 }
@@ -62,7 +59,7 @@ precf <- system.file("map/precipitation.grd", package="rasterList")##
 
 ## Sample L-moments
  library(lmom)
-\donttest{
+\dontrun{
 prec <- stack(precf)
 samlmom <- stack(rasterList(prec,FUN=samlmu))
 ## Fitting a Random Probability Distribution: it is a 'rasterList' Object
