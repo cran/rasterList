@@ -20,9 +20,11 @@ soilpar$color <- str_sub(rainbow(nrow(soilpar)),end=7)  ## Only first 7 characte
 ## ----eval=TRUE,fig.width=7----------------------------------------------------
 library(rasterList)
 
+
 ## ----eval=TRUE,fig.width=7----------------------------------------------------
 library(sp)
-data(meuse)
+library(sf)
+data(meuse) ## USE sf 
 help(meuse)
 data(meuse.grid)
 help(meuse.grid)
@@ -50,6 +52,7 @@ gridded(meuse.grid) <- TRUE
 proj4string(meuse) <- CRS("+init=epsg:28992")
 proj4string(meuse.grid) <- CRS("+init=epsg:28992")
 ## Not run: 
+meuse <- as(meuse,"sf")
 soilmap <- as.factor(stack(meuse.grid)[['soil']])
 ###elevmap <- rasterize(x=meuse,y=soilmap,field="elev",fun=mean)
 
@@ -94,13 +97,15 @@ points <- data.frame(lon=lon,lat=lat,name=name)
 print(points)
 coordinates(points) <- ~lon+lat
 proj4string(points) <- CRS("+proj=longlat  +ellps=WGS84") 
-leaf3 %>% addMarkers(lng=points$lon,lat=points$lat,label=points$name)
+points <- as(points,"sf")
+
+leaf3 %>% addMarkers(lng=st_coordinates(points)[,"X"],lat=st_coordinates(points)[,"Y"],label=points$name)
 
 
 ## ----eval=TRUE,fig.width=7----------------------------------------------------
 
-points$icell <- cellFromXY(soil_parameters,spTransform(points,projection(soil_parameters)))
-
+#####points$icell <- cellFromXY(soil_parameters,spTransform(points,projection(soil_parameters))) ## 
+points$icell <- cellFromXY(soil_parameters,as_Spatial(st_transform(points,crs=projection(soil_parameters))))
 
 ## ----eval=TRUE,fig.width=7----------------------------------------------------
 soil_parameters[points$icell]
@@ -166,7 +171,7 @@ plot(psi)
 color <- colorNumeric("Blues",domain=psi[])
 
 leaf_psi <- leaf1 %>% addRasterImage(psi,color=color,opacity=opacity) %>% 
-addLegend(position="bottomright",pal=color,values=psi[],opacity=opacity,title="Psi") %>% addMarkers(lng=points$lon,lat=points$lat,label=points$name)
+addLegend(position="bottomright",pal=color,values=psi[],opacity=opacity,title="Psi") %>% addMarkers(lng=st_coordinates(points)[,"X"],lat=st_coordinates(points)[,"Y"],label=points$name) ##addMarkers(lng=points$lon,lat=points$lat,label=points$name)
 
 leaf_psi
 
@@ -179,7 +184,7 @@ plot(theta)
 color <- colorNumeric("Blues",domain=theta[])
 
 leaf_psi <- leaf1 %>% addRasterImage(theta,color=color,opacity=opacity) %>% 
-addLegend(position="bottomright",pal=color,values=theta[],opacity=opacity,title="Psi") %>% addMarkers(lng=points$lon,lat=points$lat,label=points$name)
+addLegend(position="bottomright",pal=color,values=theta[],opacity=opacity,title="Psi") %>% addMarkers(lng=st_coordinates(points)[,"X"],lat=st_coordinates(points)[,"Y"],label=points$name) ##addMarkers(lng=points$lon,lat=points$lat,label=points$name)
 
 leaf_psi
 
