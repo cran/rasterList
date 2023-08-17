@@ -1,27 +1,41 @@
-## ----setup, include = FALSE---------------------------------------------------
+## ----setup, eval=TRUE, include = FALSE,warning=TRUE---------------------------
+
+## Package loaded in this vignette 
+vignette_pkgs <-  c("lmom","sp","sf","soilwater","lubridate","ggplot2","gridExtra","knitcitations","leaflet","lmomPi","stringr","trend","knitr")
+
+eval <- TRUE
+for (it_pkg in vignette_pkgs) {
+  
+  eval <- eval & requireNamespace(it_pkg,quietly=TRUE)
+  if (!eval) warning(sprintf("Namespace %s package missing",it_pkg))
+   
+}
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   echo=TRUE,
-  warning = FALSE
+  warning = FALSE,
+  eval=eval
 )
+options(rmarkdown.html_vignette.check_title = FALSE)
 ###knitr::opts_chunk$set(echo = TRUE)
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(soilwater)
 library(stringr)
 soilparcsv <- system.file("external/soil_data.csv",package="soilwater")
 soilpar <- read.table(soilparcsv,stringsAsFactors=FALSE,header=TRUE,sep=",")
 knitr::kable(soilpar,caption="Average value of Van Genuchten's parameter per each soil type")
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 soilpar$color <- str_sub(rainbow(nrow(soilpar)),end=7)  ## Only first 7 characters of HTML code is considered.
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(rasterList)
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(sp)
 library(sf)
 data(meuse) ## USE sf 
@@ -29,7 +43,7 @@ help(meuse)
 data(meuse.grid)
 help(meuse.grid)
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 soiltype_id <- c(1,2,3)
 soiltype_name <- c("sandy clay","clay","silty clay loam")
 ## Then
@@ -38,7 +52,7 @@ is <- order(soilpar_s[,1],by=soiltype_name)
 soilpar_s <- soilpar_s[is,]
 soilpar_s$id <- soiltype_id
 
-## ----eval=TRUE, fig.width=7---------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(rasterList)
 library(soilwater)
 library(leaflet)
@@ -68,7 +82,7 @@ addLegend(position="bottomright",colors=soilpar_s$color,labels=soilpar_s$type,ti
 
 leaf2
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 soil_parameters_f <- function (soiltype,sp=soilpar_s) {
   o <- sp[soiltype,c("swc","rwc","alpha","n","m")]
@@ -77,18 +91,18 @@ soil_parameters_f <- function (soiltype,sp=soilpar_s) {
   }
 soil_parameters_rl <- rasterList(soilmap,FUN=soil_parameters_f)
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 soil_parameters <- stack(soil_parameters_rl)
 soil_parameters
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 theta_sat <- soil_parameters[["theta_sat"]]
 color <- colorNumeric("Greens",domain=theta_sat[])
 
 leaf3 <- leaf1 %>% addRasterImage(theta_sat,color=color,opacity=opacity) %>% 
 addLegend(position="bottomright",pal=color,values=theta_sat[],opacity=opacity,title="Porosity")
 
-## ----eval=TRUE, fig.width=7---------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 lat <- 50.961532+c(0,0,0.02)
 lon <-  5.724514+c(0,0.01,0.0323)
 name <- c("A","B","C")
@@ -102,15 +116,15 @@ points <- as(points,"sf")
 leaf3 %>% addMarkers(lng=st_coordinates(points)[,"X"],lat=st_coordinates(points)[,"Y"],label=points$name)
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 #####points$icell <- cellFromXY(soil_parameters,spTransform(points,projection(soil_parameters))) ## 
 points$icell <- cellFromXY(soil_parameters,as_Spatial(st_transform(points,crs=projection(soil_parameters))))
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 soil_parameters[points$icell]
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(soilwater)
 
 swc_func <- function(x,...) {
@@ -122,12 +136,12 @@ swc_func <- function(x,...) {
         return(o)
 }
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 soilparA <- soil_parameters[points$icell[1]][1,]
 swcA <- swc_func(soilparA)
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(ggplot2)
 psi <- seq(from=-5,to=1,by=0.25)
 title <- "Soil Water Retention Curve at Point A"
@@ -137,21 +151,21 @@ gswA <- ggplot()+geom_line(aes(x=psi,y=swcA(psi)))+theme_bw()
 gswA <- gswA+ggtitle(title)+xlab(xlab)+ylab(ylab)
 gswA
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 swc_rl <- rasterList(soil_parameters,FUN=swc_func)
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 swc_rlf <- rasterListFun(swc_rl)
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 psi <- c(0,-0.5,-1,-2)
 names(psi) <- sprintf("psi= %1.1f m",psi)
 soil_water_content <- stack(swc_rlf(psi))
 names(soil_water_content) <- names(psi)
 plot(soil_water_content,main=names(psi))
 
-## ----eval=TRUE,fig.width=7,warings=TRUE---------------------------------------
+## ----fig.width=7,warings=TRUE-------------------------------------------------
 region <- raster(swc_rlf(0))
 mask <- !is.na(region)
 region[] <- NA
@@ -166,7 +180,7 @@ psi_min <- -2
 psi <- psi_max+(psi_min-psi_max)*(1-exp(-dist/mdist))
 plot(psi)
 
-## ----eval=TRUE,fig.width=7,waring=FALSE---------------------------------------
+## ----fig.width=7,waring=FALSE-------------------------------------------------
 
 color <- colorNumeric("Blues",domain=psi[])
 
@@ -175,11 +189,11 @@ addLegend(position="bottomright",pal=color,values=psi[],opacity=opacity,title="P
 
 leaf_psi
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 theta <- raster(swc_rlf(psi))
 plot(theta)
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 
 color <- colorNumeric("Blues",domain=theta[])
 
@@ -216,7 +230,7 @@ prec <- stack(precf)
   im <- which(months<8)
   years[im] <- years[im]-1
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 lseason <- tapply(X=dates,FUN=length,INDEX=years)
 years_c <- names(lseason)[which(lseason==12)]
@@ -225,14 +239,14 @@ prec <- prec[[ic]]
 years <- years[ic]
 months <- months[ic]
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
   ###
   prec_sum <- stackApply(prec,fun=sum,indices=years-years[1]+1)
   names(prec_sum) <- years[1]+as.numeric(str_replace_all(names(prec_sum),"index_",""))-1
   prec_sum
   
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 
 
 library(leaflet)
@@ -261,7 +275,7 @@ leaf_l_1 <- leaf %>% addRasterImage(r,opacity=opacity,color=color) %>% addLegend
 leaf_l_1
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 pts <- data.frame(lat=c(-7.140278,-5.16,-1.55481,-3.784722),lon=c(-78.488889,-78.288889,-74.609001,-73.308333),name=c("Cajamarca","Imaza","Angoteros","Iquitos"),label=c("CJA","IMZ","ANG","IQT"),stringsAsFactors = FALSE)
 pts <- pts[1:2,] ## only Cajamarca and Imaza
@@ -270,7 +284,7 @@ head(pts)
 
 leaf_l_1 %>% addMarkers(lng=pts$lon,lat=pts$lat,label=sprintf("%10.2f mm at %s",r[pts$icell], pts$label))
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 library(trend)
 
 sens.slope_ <- function(x,...) {
@@ -283,14 +297,14 @@ sens.slope_ <- function(x,...) {
 prec_sum_sens_slope <- rasterList(prec_sum,FUN=sens.slope_)
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 
 lsl <- as.list(prec_sum_sens_slope@list[pts$icell])
 names(lsl) <- pts$label
 lsl
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
   
   library(gridExtra)
   library(ggplot2)
@@ -333,7 +347,7 @@ lsl
   
   do.call(what=grid.arrange,args=ptstrend) 
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 r <-  prec_sum_sens_slope_trend 
 #### Domain 
 mm <- range(r[],na.rm=TRUE)
@@ -352,7 +366,7 @@ leaf_trend <- leaf %>% addRasterImage(r,opacity=opacity,color=color) %>% addLege
 
 leaf_trend %>% addMarkers(lng=pts$lon,lat=pts$lat,label=sprintf("%10.2f mm/year at %s",r[pts$icell], pts$label))
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
 
 prec_rank <- rasterList(prec,FUN=function(x,years,xnum){
         
@@ -367,7 +381,7 @@ prec_rank_mean <- stack(prec_rank,FUN=function(x,...){
   return(o)
 },na.rm=FALSE)
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 prec_rank_mean_sens_slope <- rasterList(prec_rank_mean,FUN=sens.slope_)
 prec_rank_mean_sens_slope_trend <- raster(prec_rank_mean_sens_slope,FUN=getTrend)
 ptstrend <- list()
@@ -378,7 +392,7 @@ ptstrend <- list()
   }
   do.call(what=grid.arrange,args=ptstrend) 
 
-## ----eval=TRUE,fig.width=7,warning=FALSE,ercho=FALSE,message=FALSE------------
+## ----fig.width=7,warning=FALSE,ercho=FALSE,message=FALSE----------------------
 r <-  prec_rank_mean_sens_slope_trend
 #### Domain 
 mm <- range(r[],na.rm=TRUE)
@@ -397,14 +411,14 @@ leaf_trend <- leaf %>% addRasterImage(r,opacity=opacity,color=color) %>% addLege
 
 leaf_trend %>% addMarkers(lng=pts$lon,lat=pts$lat,label=sprintf("%10.2f mm/year at %s",r[pts$icell], pts$label))
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
   
   years <- as.numeric(str_replace(names(prec_sum),"X",""))
   years_max <- years[length(years)]
   prec_sum_res <- prec_sum-stack(lapply(X=(years-years_max),FUN="*",prec_sum_sens_slope_trend))
   prec_rank_mean_res <- prec_rank_mean-stack(lapply(X=(years-years_max),FUN="*",prec_rank_mean_sens_slope_trend))
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
   library(lmomPi)
   prec_m_ts <- prec_rank_mean_res[pts$icell[1]]
   lmoments <- samlmu(prec_m_ts,ratios=TRUE)
@@ -416,7 +430,7 @@ leaf_trend %>% addMarkers(lng=pts$lon,lat=pts$lat,label=sprintf("%10.2f mm/year 
   }
   ks
 
-## ----eval=TRUE,fig.width=7,warning=FALSE--------------------------------------
+## ----fig.width=7,warning=FALSE------------------------------------------------
 samlmom <- stack(rasterList(prec_rank_mean_res,FUN=samlmu,ratios=TRUE))
 ## This is a correction
 inas <- is.na(samlmom)
@@ -432,21 +446,21 @@ for (it in distrib) {
 kstesting[["pe3"]]@list[[pts$icell[1]]]  
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
   pval_ks <- list()
   pval_ks[["pe3"]] <- raster(kstesting[["pe3"]],FUN=function(x){x$p.value})
   plot(pval_ks[["pe3"]]>0.1)
   pval_ks[["pe3"]] 
 
 
-## ----eval=TRUE,fig.width=7----------------------------------------------------
+## ----fig.width=7--------------------------------------------------------------
  
   pval_ks[["gev"]] <- raster(kstesting[["gev"]],FUN=function(x){x$p.value})
   plot(pval_ks[["gev"]]>0.1)
   pval_ks[["gev"]] 
 
 
-## ----eval=TRUE,fig.width=7,warning=TRUE---------------------------------------
+## ----fig.width=7,warning=TRUE-------------------------------------------------
 return_periods <- c(5,10,20,50,100) 
 frq= 1/return_periods
 names(frq) <- sprintf("T%d",return_periods)
@@ -458,7 +472,7 @@ percentiles <-  stack(fitdist[["pe3"]],FUN=function(p,frq) {
    },frq=frq)
 
 
-## ----eval=TRUE,fig.width=7,warning=FALSE,ercho=FALSE,message=FALSE------------
+## ----fig.width=7,warning=FALSE,ercho=FALSE,message=FALSE----------------------
 r <-  percentiles[["T20"]]
 rp <- r
 r[r>1000] <- 1000
@@ -480,7 +494,7 @@ leaf_trp <- leaf %>% addRasterImage(r,opacity=opacity,color=color) %>% addLegend
 leaf_trp %>% addMarkers(lng=pts$lon,lat=pts$lat,label=sprintf("%10.2f mm at %s",rp[pts$icell], pts$label))
 
 
-## ----generateBibliography,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE,print=FALSE,results="hide"----
+## ----generateBibliography,echo=FALSE,message=FALSE,warning=FALSE,print=FALSE,results="hide"----
 require("knitcitations")
 cleanbib()
 options("citation_format" = "pandoc")
